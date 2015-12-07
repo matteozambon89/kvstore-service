@@ -17,9 +17,9 @@ from server.core import app, get_storage_location, make_my_response_json
 from server.core import convert_types_in_dictionary, remove_single_element_lists
 from server.core import json_response
 
-ddb_kvstore = Table(os.environ.get('KVSTORE_DYNAMO_TABLE', 'kv-store'))
+ddb_kvstore = Table(os.environ.get('KVSTORE_DYNAMO_TABLE', 'kvstore'))
 s3_conn = boto.connect_s3()
-s3_bucket = s3_conn.get_bucket(os.environ.get('KVSTORE_S3_BUCKET', 'kvstore-large.glgroup.com'))
+s3_bucket = s3_conn.get_bucket(os.environ.get('KVSTORE_S3_BUCKET', 'kvstore-large'))
 
 def add_cors(response):
     response[2]['Access-Control-Allow-Origin'] = request.headers.get('Origin', '*')
