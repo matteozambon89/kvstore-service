@@ -13,9 +13,9 @@ from boto.s3.key import Key as S3Key
 from boto.exception import S3ResponseError
 from boto.dynamodb2.table import Table
 from boto.dynamodb2.exceptions import ItemNotFound, ValidationException
-from pyserver.core import app, get_storage_location, make_my_response_json
-from pyserver.core import convert_types_in_dictionary, remove_single_element_lists
-from pyserver.core import json_response
+from server.core import app, get_storage_location, make_my_response_json
+from server.core import convert_types_in_dictionary, remove_single_element_lists
+from server.core import json_response
 
 ddb_kvstore = Table(os.environ.get('KVSTORE_DYNAMO_TABLE', 'kv-store'))
 s3_conn = boto.connect_s3()

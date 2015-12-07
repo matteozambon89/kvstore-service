@@ -1,4 +1,4 @@
-from pyserver.core import app
+from server.core import app
 from flask import request
 
 @app.route("/echo", methods=["GET", "POST"])
