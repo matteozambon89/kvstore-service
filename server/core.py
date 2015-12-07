@@ -188,10 +188,6 @@ def json_response(*args, **kwargs):
             status_code = 200
 
     headers = {"Content-Type": content_type, "Cache-Control": "no-cache", "Pragma": "no-cache"}
-    headers['Access-Control-Allow-Origin'] = request.headers.get('Origin', '*')
-    headers['Access-Control-Allow-Credentials'] = 'true'
-    headers['Access-Control-Allow-Methods'] = 'POST, GET, OPTIONS'
-    headers['Access-Control-Allow-Headers'] = request.headers.get('Access-Control-Request-Headers', '*')
 
     return (
         response_string,
@@ -199,7 +195,15 @@ def json_response(*args, **kwargs):
         headers
     )
 
+def return_cors_response():
+    headers = dict()
+    headers['Access-Control-Allow-Methods'] = 'POST, GET, OPTIONS, DELETE, PATCH'
+    headers['Access-Control-Allow-Headers'] = request.headers.get('Access-Control-Request-Headers', '*')
+    return ( "", 204, headers )
+
 def global_response_handler(response):
+    response.headers['Access-Control-Allow-Origin'] = request.headers.get('Origin', '*')
+    response.headers['Access-Control-Allow-Credentials'] = 'true'
     response.headers['X-HOSTNAME'] = app.config['X-HOSTNAME']
     response.headers['X-APP-VERSION'] = app.config['VERSION']
     return response

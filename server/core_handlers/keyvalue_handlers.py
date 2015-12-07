@@ -6,36 +6,23 @@ import hashlib
 import logging
 import boto
 from functools import wraps
-
 from flask import request, make_response
-
 from boto.s3.key import Key as S3Key
 from boto.exception import S3ResponseError
 from boto.dynamodb2.table import Table
 from boto.dynamodb2.exceptions import ItemNotFound, ValidationException
 from server.core import app, get_storage_location, make_my_response_json
 from server.core import convert_types_in_dictionary, remove_single_element_lists
-from server.core import json_response
+from server.core import json_response, return_cors_response
 
-ddb_kvstore = Table(os.environ.get('KVSTORE_DYNAMO_TABLE', 'kvstore'))
+ddb_table_name = os.environ.get('KVSTORE_DYNAMO_TABLE', 'kvstore')
+s3_bucket_name = os.environ.get('KVSTORE_S3_BUCKET', 'kvstore-large')
+logging.info("Using DDB table: %s" % (ddb_table_name))
+logging.info("Using S3 bucket %s for large objects" %(s3_bucket_name))
+
+ddb_kvstore = Table(ddb_table_name)
 s3_conn = boto.connect_s3()
-s3_bucket = s3_conn.get_bucket(os.environ.get('KVSTORE_S3_BUCKET', 'kvstore-large'))
-
-def add_cors(response):
-    response[2]['Access-Control-Allow-Origin'] = request.headers.get('Origin', '*')
-    response[2]['Access-Control-Allow-Credentials'] = 'true'
-    response[2]['Access-Control-Allow-Methods'] = 'POST, GET, OPTIONS'
-    response[2]['Access-Control-Allow-Headers'] = request.headers.get('Access-Control-Request-Headers', '*')
-
-@app.route("/kv/__user_betas__/<path:keys>", methods=["OPTIONS"])
-@app.route('/kv/<path:key>', methods=['OPTIONS'])
-def allow_cors(keys='', key='', data=''):
-    response = make_response(data)
-    response.headers['Access-Control-Allow-Origin'] = request.headers.get('Origin', '*')
-    response.headers['Access-Control-Allow-Credentials'] = 'true'
-    response.headers['Access-Control-Allow-Methods'] = 'POST, GET, OPTIONS'
-    response.headers['Access-Control-Allow-Headers'] = request.headers.get('Access-Control-Request-Headers', '*')
-    return response
+s3_bucket = s3_conn.get_bucket(s3_bucket_name)
 
 def get_storage_path_for(key):
     hash_o = hashlib.sha256()
@@ -80,7 +67,11 @@ def read_it(key):
 def delete_it(key):
     ddb_kvstore.delete_item(path=get_storage_path_for(key))
 
-@app.route("/kv/<path:key>", methods=["POST"])
+@app.route("/<path:key>", methods=["OPTIONS"])
+def pyserver_core_keyvalue_handlers_options_handler(key=None):
+    return return_cors_response()
+
+@app.route("/<path:key>", methods=["POST"])
 @make_my_response_json
 def pyserver_core_keyvalue_handlers_store_data(key=None):
     """
@@ -109,7 +100,7 @@ def pyserver_core_keyvalue_handlers_store_data(key=None):
 
     return {"message": "ok"}
 
-@app.route("/kv/<path:key>", methods=["GET"])
+@app.route("/<path:key>", methods=["GET"])
 def pyserver_core_keyvalue_handlers_get_data_for(key=None):
     """
         For a given key return the data stored, if any.
@@ -138,11 +129,10 @@ def pyserver_core_keyvalue_handlers_get_data_for(key=None):
             response = (value, 200, {"Content-Type": content_type })
 
     response[2]['X-File-Path'] = file_path
-    add_cors(response)
     return response
 
 
-@app.route("/kv/__multikey__/<path:keys>", methods=["GET"])
+@app.route("/__multikey__/<path:keys>", methods=["GET"])
 def pyserver_core_keyvalue_handlers_get_data_for_multi(keys=None):
     """
         For a given set of keys return the data stored, if any.
@@ -183,63 +173,9 @@ def pyserver_core_keyvalue_handlers_get_data_for_multi(keys=None):
             response = "%s(%s);" % (callback, values), 200, {"Content-Type": "application/javascript"}
         else:
             response = values, 200, {"Content-Type": first_content_type }
-
-    add_cors(response)
     return response
 
-@app.route("/kv/__beta_groups__/<path:keys>", methods=["GET"])
-def pyserver_core_keyvalue_handlers_get_beta_groups(keys=None):
-    keys = keys.split('/')
-
-    content_type, value, file_path = read_it('bmp_data')
-    bmp_value = json.loads(value)
-    groups = dict( (item['name'], item['users']) for item in bmp_value['groups'] )
-
-    values = {}
-    for key in keys:
-        if key in groups:
-            values[key] = groups[key]
-        else:
-            values[key] = []
-
-    callback = request.values.get("callback", None)
-
-    if callback:
-        response = "%s(%s);" % (callback, json.dumps(values)), 200, {"Content-Type": "application/javascript"}
-    else:
-        response = json.dumps(values), 200, {"Content-Type": 'application/json' }
-
-    response[2]['X-File-Path'] = file_path
-    add_cors(response)
-    return response
-
-@app.route("/kv/__user_betas__/<path:keys>", methods=["GET"])
-def pyserver_core_keyvalue_handlers_get_user_betas(keys=None):
-    keys = keys.split('/')
-
-    content_type, value, file_path = read_it('bmp_data')
-    bmp_value = json.loads(value)
-    users = {}
-    for user in keys:
-        users[user] = []
-
-    for group in bmp_value['groups']:
-        for user in group['users']:
-            if user in users:
-                users[user].append(group['name'])
-
-    callback = request.values.get("callback", None)
-
-    if callback:
-        response = "%s(%s);" % (callback, json.dumps(users)), 200, {"Content-Type": "application/javascript"}
-    else:
-        response = json.dumps(users), 200, {"Content-Type": 'application/json' }
-
-    response[2]['X-File-Path'] = file_path
-    add_cors(response)
-    return response
-
-@app.route("/kv/__multikey__", methods=["POST"])
+@app.route("/__multikey__", methods=["POST"])
 @make_my_response_json
 def pyserver_core_keyvalue_handlers_store_data_multi():
     """
@@ -258,7 +194,7 @@ def pyserver_core_keyvalue_handlers_store_data_multi():
 
     return dict(message="ok")
 
-@app.route("/kv/<path:key>", methods=["DELETE"])
+@app.route("/<path:key>", methods=["DELETE"])
 @make_my_response_json
 def pyserver_core_keyvalue_handlers_delete_data_for(key):
     """
