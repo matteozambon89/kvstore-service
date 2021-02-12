@@ -19,8 +19,8 @@ from werkzeug import secure_filename
 from werkzeug.http import http_date
 from werkzeug.routing import Submount, Map
 
-from cache import FileSystemCache
-import messages
+from .cache import FileSystemCache
+from . import messages
 
 
 STATIC_DIR = os.environ.get('STATIC_DIR', path.join(os.getcwd(), 'static'))
@@ -65,7 +65,7 @@ def get_storage_location(named):
 
 def remove_single_element_lists(d):
     new_dict = {}
-    for key, value in d.items():
+    for key, value in list(d.items()):
         if type(value) == list and len(value) == 1:
             new_dict[key] = value[0]
         else:
@@ -87,7 +87,7 @@ def convert_into_number(value):
 
 def convert_types_in_dictionary(this_dictionary):
     into_this_dictionary = {}
-    for key, value in this_dictionary.items():
+    for key, value in list(this_dictionary.items()):
         if type(value) == dict:
             value = convert_types_in_dictionary(value)
         elif type(value) == list:
@@ -116,7 +116,7 @@ def cache_my_response(vary_by=None, expiration_seconds=900):
             if not vary_by:
                 cache_key = request.url
             else:
-                from StringIO import StringIO
+                from io import StringIO
                 key_buffer = StringIO()
                 key_buffer.write(request.url)
                 for vary_by_this in vary_by:
@@ -309,7 +309,7 @@ def _load_handlers(handlers):
         split_name = os.path.splitext(file_path)
         if split_name[1] == ".py" and not "__init__" in split_name[0]:
             module_name = split_name[0][2:].replace("/", ".")
-            logging.debug("loading handlers from %s" % (module_name))
+            logging.error("loading handlers from %s" % (module_name))
             module = __import__(module_name, globals())
 
 # find and load our handler files, this isn't fancy and it's not intended to be

@@ -1,8 +1,8 @@
 import os
 import logging
 from argparse import ArgumentParser
-from core import app
-from core import handler_list
+from .core import app
+from .core import handler_list
 
 """ we should only get here for debugging and testing, as we're gonna
 	use gunicorn for serving in production
@@ -22,5 +22,5 @@ def main():
             port=args.port,
             extra_files=handler_list)
     elif args.action == "config":
-        for key, value in app.config.items():
-            print("%s: %s" % (key, value))
+        for key, value in list(app.config.items()):
+            print(("%s: %s" % (key, value)))
