@@ -152,7 +152,7 @@ def make_my_response_json(f):
                 return json_response(view_return[0], status_code=view_return[1])
             else:
                 return json_response(**{})
-        except Exception, e:
+        except Exception as e:
             return json_response(**dict(status_code=400, description=e.description))
     return view_wrapper
 

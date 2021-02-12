@@ -1,4 +1,4 @@
-FROM python:2.7.18-alpine3.11
+FROM python:3.9.1-alpine3.13
 
 RUN  mkdir -p /kvstore/server/
 COPY start requirements.txt /kvstore/
