@@ -60,7 +60,7 @@ def read_it(key):
             content_type = s3Key.get_metadata('content-type')
             return content_type, body, key
         except S3ResponseError, e:
-            logging.error("unable to find item for key %s anywhere\n%s", key, e)
+            logging.debug("unable to find item for key %s anywhere\n%s", key, e)
 
         return None, None, None
 

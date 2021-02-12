@@ -138,19 +138,22 @@ def cache_my_response(vary_by=None, expiration_seconds=900):
 def make_my_response_json(f):
     @wraps(f)
     def view_wrapper(*args, **kwargs):
-        view_return = f(*args, **kwargs)
-        if type(view_return) == dict:
-            return json_response(**view_return)
-        elif type(view_return) == list:
-            return json_response(view_return)
-        elif type(view_return) == int:
-            return json_response(**dict(status_code=view_return))
-        elif type(view_return) == str:
-            return json_response(view_return)
-        elif type(view_return) == tuple:
-            return json_response(view_return[0], status_code=view_return[1])
-        else:
-            return json_response(**{})
+        try:
+            view_return = f(*args, **kwargs)
+            if type(view_return) == dict:
+                return json_response(**view_return)
+            elif type(view_return) == list:
+                return json_response(view_return)
+            elif type(view_return) == int:
+                return json_response(**dict(status_code=view_return))
+            elif type(view_return) == str:
+                return json_response(view_return)
+            elif type(view_return) == tuple:
+                return json_response(view_return[0], status_code=view_return[1])
+            else:
+                return json_response(**{})
+        except Exception, e:
+            return json_response(**dict(status_code=400, description=e.description))
     return view_wrapper
 
 def json_response(*args, **kwargs):
@@ -159,7 +162,7 @@ def json_response(*args, **kwargs):
         or kwargs to be passed formatted correctly for the response.
         Also sets the Content-Type of the response to application/json
     """
-    content_type = "application/json";
+    content_type = "application/json"
     # if provided, use the status code otherwise default to 200
     # we remove it so it doesn't end up in our response
     status_code = kwargs.pop('status_code', 200)
