@@ -5,4 +5,4 @@ Flask==1.1.2
 gunicorn==19.10.0
 pystache==0.5.3
 six==1.2.0
-boto==2.36.0
+boto==2.49.0
