@@ -313,7 +313,9 @@ def _load_handlers(handlers):
             module = __import__(module_name, globals())
 
 # find and load our handler files, this isn't fancy and it's not intended to be
-here = path.abspath(path.dirname(__file__))
-handler_dir = path.join(here, 'core_handlers')
-core_handlers = [ "./core_handlers/%s" % name for name in os.listdir(handler_dir)]
-_load_handlers(core_handlers)
+#here = path.abspath(path.dirname(__file__))
+#handler_dir = path.join(here, 'core_handlers')
+#core_handlers = [ "./core_handlers/%s" % name for name in os.listdir(handler_dir)]
+#_load_handlers(core_handlers)
+from .core_handlers import keyvalue_handlers, echo
+
