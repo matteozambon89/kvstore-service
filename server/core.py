@@ -222,7 +222,7 @@ app.preprocess_request = global_request_handler
 def get_git_info():
     git_sha = Popen("git log -1 --oneline | awk '{ print $1 }'", stdout=PIPE, shell=True).communicate()[0].strip()
     git_branch = Popen("git rev-parse --abbrev-ref HEAD", stdout=PIPE, shell=True).communicate()[0].strip()
-    return git_branch, git_sha
+    return git_branch.decode(), git_sha.decode()
 
 @app.route("/", methods=["GET"])
 @app.route("/diag", methods=["GET"])
