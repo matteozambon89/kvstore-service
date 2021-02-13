@@ -1,15 +1,11 @@
 import uuid
 import unittest
-from pyserver.core import *
+from server.core import *
 
 class TestFixture(unittest.TestCase):
     def setUp(self):
         app.config['TESTING'] = True
         self.app = app.test_client()
-        self.app_cache = app.config['_CACHE']
-    
-    def tearDown(self):
-        app.config['_CACHE'] = self.app_cache
 
     def test_response_header_has_hostname(self):
         response = self.app.get("/diagnostic")

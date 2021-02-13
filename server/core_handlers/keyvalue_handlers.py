@@ -44,7 +44,7 @@ def store_it(key, data, content_type):
         newS3Key.key = get_storage_path_for(key)
         newS3Key.set_metadata('content-type', content_type)
         newS3Key.set_metadata('key', key)
-        newS3Key.set_contents_from_string(data);
+        newS3Key.set_contents_from_string(data)
 
 def read_it(key):
     try:
