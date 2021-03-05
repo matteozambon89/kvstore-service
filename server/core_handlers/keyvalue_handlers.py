@@ -23,7 +23,7 @@ logging.info("Using S3 bucket %s for large objects" %(s3_bucket_name))
 
 ddb_kvstore = Table(ddb_table_name)
 
-if ("." in s3_bucket_name):
+if "." in s3_bucket_name:
     logging.debug("Using ordinary calling format for s3 connection")
     s3_conn = boto.connect_s3(calling_format=OrdinaryCallingFormat())
 else:
