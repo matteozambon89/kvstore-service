@@ -19,6 +19,7 @@ class TestFixture(unittest.TestCase):
     def test_fail_json_formatted_response(self):
         previous_prop = app.config['PROPAGATE_EXCEPTIONS']
         app.config['PROPAGATE_EXCEPTIONS'] = False
+        print("sandwicch: %s " % app.config['PROPAGATE_EXCEPTIONS'])
         response = self.app.get("/diagnostic/fail", content_type='json')
         app.config['PROPAGATE_EXCEPTIONS'] = previous_prop
         self.assertEqual(500, response.status_code)
@@ -29,6 +30,7 @@ class TestFixture(unittest.TestCase):
     def test_fail_html_formatted_response(self):
         previous_prop = app.config['PROPAGATE_EXCEPTIONS']
         app.config['PROPAGATE_EXCEPTIONS'] = False
+        app.config['TRAP_HTTP_EXCEPTIONS'] = True
         response = self.app.get("/diagnostic/fail")
         app.config['PROPAGATE_EXCEPTIONS'] = previous_prop
         self.assertEqual(500, response.status_code)
