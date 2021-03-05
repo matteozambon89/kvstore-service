@@ -21,7 +21,7 @@ logging.info("Using DDB table: %s" % (ddb_table_name))
 logging.info("Using S3 bucket %s for large objects" %(s3_bucket_name))
 
 ddb_kvstore = Table(ddb_table_name)
-s3_conn = boto.connect_s3()
+s3_conn = boto.connect_s3(is_secure=False)
 s3_bucket = s3_conn.get_bucket(s3_bucket_name)
 
 def get_storage_path_for(key):
