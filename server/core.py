@@ -19,8 +19,7 @@ from werkzeug import secure_filename
 from werkzeug.http import http_date
 from werkzeug.routing import Submount, Map
 
-from cache import FileSystemCache
-import messages
+from . import messages
 
 
 STATIC_DIR = os.environ.get('STATIC_DIR', path.join(os.getcwd(), 'static'))
@@ -41,7 +40,6 @@ app.config['SUBMOUNT_PATH'] = os.environ.get('SUBMOUNT_PATH', None)
 # this of course depends on the system supporting events for those sources
 app.config['LOCAL_EVENT_SOURCES'] = frozenset(os.environ.get('LOCAL_EVENT_SOURCES', '').split(","))
 
-app.config['_CACHE'] = FileSystemCache(app.config['CACHE_ROOT'])
 app.jinja_loader = ChoiceLoader([
         FileSystemLoader("./templates"),
         FileSystemLoader("./pyserver/templates")
@@ -65,7 +63,7 @@ def get_storage_location(named):
 
 def remove_single_element_lists(d):
     new_dict = {}
-    for key, value in d.items():
+    for key, value in list(d.items()):
         if type(value) == list and len(value) == 1:
             new_dict[key] = value[0]
         else:
@@ -87,7 +85,7 @@ def convert_into_number(value):
 
 def convert_types_in_dictionary(this_dictionary):
     into_this_dictionary = {}
-    for key, value in this_dictionary.items():
+    for key, value in list(this_dictionary.items()):
         if type(value) == dict:
             value = convert_types_in_dictionary(value)
         elif type(value) == list:
@@ -116,7 +114,7 @@ def cache_my_response(vary_by=None, expiration_seconds=900):
             if not vary_by:
                 cache_key = request.url
             else:
-                from StringIO import StringIO
+                from io import StringIO
                 key_buffer = StringIO()
                 key_buffer.write(request.url)
                 for vary_by_this in vary_by:
@@ -138,19 +136,22 @@ def cache_my_response(vary_by=None, expiration_seconds=900):
 def make_my_response_json(f):
     @wraps(f)
     def view_wrapper(*args, **kwargs):
-        view_return = f(*args, **kwargs)
-        if type(view_return) == dict:
-            return json_response(**view_return)
-        elif type(view_return) == list:
-            return json_response(view_return)
-        elif type(view_return) == int:
-            return json_response(**dict(status_code=view_return))
-        elif type(view_return) == str:
-            return json_response(view_return)
-        elif type(view_return) == tuple:
-            return json_response(view_return[0], status_code=view_return[1])
-        else:
-            return json_response(**{})
+        try:
+            view_return = f(*args, **kwargs)
+            if type(view_return) == dict:
+                return json_response(**view_return)
+            elif type(view_return) == list:
+                return json_response(view_return)
+            elif type(view_return) == int:
+                return json_response(**dict(status_code=view_return))
+            elif type(view_return) == str:
+                return json_response(view_return)
+            elif type(view_return) == tuple:
+                return json_response(view_return[0], status_code=view_return[1])
+            else:
+                return json_response(**{})
+        except Exception as e:
+            return json_response(**dict(status_code=400, description=e.description))
     return view_wrapper
 
 def json_response(*args, **kwargs):
@@ -159,7 +160,7 @@ def json_response(*args, **kwargs):
         or kwargs to be passed formatted correctly for the response.
         Also sets the Content-Type of the response to application/json
     """
-    content_type = "application/json";
+    content_type = "application/json"
     # if provided, use the status code otherwise default to 200
     # we remove it so it doesn't end up in our response
     status_code = kwargs.pop('status_code', 200)
@@ -218,11 +219,6 @@ app.preprocess_request = global_request_handler
 ################################################################################
 # views
 
-def get_git_info():
-    git_sha = Popen("git log -1 --oneline | awk '{ print $1 }'", stdout=PIPE, shell=True).communicate()[0].strip()
-    git_branch = Popen("git rev-parse --abbrev-ref HEAD", stdout=PIPE, shell=True).communicate()[0].strip()
-    return git_branch, git_sha
-
 @app.route("/", methods=["GET"])
 @app.route("/diag", methods=["GET"])
 @app.route("/diagnostic", methods=["GET"])
@@ -236,9 +232,6 @@ def pyserver_core_diagnostic_view():
     """
     diag_info = {}
     diag_info['machine_name'] = socket.gethostname()
-    git_branch, git_sha = get_git_info()
-    diag_info['git_branch'] = git_branch
-    diag_info['git_sha'] = git_sha
     diag_info['process_start_time'] = process_start_time.isoformat()
     diag_info['process_uptime_secs'] = (datetime.datetime.now() - process_start_time).seconds
     diag_info['server_port'] = os.environ.get('PORT', None)
@@ -299,18 +292,5 @@ def general_error_handler(error):
     else:
         return render_template("500.html", **context), 500
 
-handler_list = []
-def _load_handlers(handlers):
-    handler_list.extend(handlers)
-    for file_path in handlers:
-        split_name = os.path.splitext(file_path)
-        if split_name[1] == ".py" and not "__init__" in split_name[0]:
-            module_name = split_name[0][2:].replace("/", ".")
-            logging.debug("loading handlers from %s" % (module_name))
-            module = __import__(module_name, globals())
+from .core_handlers import keyvalue_handlers, echo
 
-# find and load our handler files, this isn't fancy and it's not intended to be
-here = path.abspath(path.dirname(__file__))
-handler_dir = path.join(here, 'core_handlers')
-core_handlers = [ "./core_handlers/%s" % name for name in os.listdir(handler_dir)]
-_load_handlers(core_handlers)

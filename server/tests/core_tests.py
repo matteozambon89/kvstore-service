@@ -1,15 +1,11 @@
 import uuid
 import unittest
-from pyserver.core import *
+from server.core import *
 
 class TestFixture(unittest.TestCase):
     def setUp(self):
         app.config['TESTING'] = True
         self.app = app.test_client()
-        self.app_cache = app.config['_CACHE']
-    
-    def tearDown(self):
-        app.config['_CACHE'] = self.app_cache
 
     def test_response_header_has_hostname(self):
         response = self.app.get("/diagnostic")
@@ -18,24 +14,24 @@ class TestFixture(unittest.TestCase):
 
     def test_echo(self):
         response = self.app.get("/echo?something=k")
-        self.assertEquals(200, response.status_code)
+        self.assertEqual(200, response.status_code)
 
     def test_fail_json_formatted_response(self):
         previous_prop = app.config['PROPAGATE_EXCEPTIONS']
         app.config['PROPAGATE_EXCEPTIONS'] = False
         response = self.app.get("/diagnostic/fail", content_type='json')
         app.config['PROPAGATE_EXCEPTIONS'] = previous_prop
-        self.assertEquals(500, response.status_code)
+        self.assertEqual(500, response.status_code)
         self.assertTrue(json.loads(response.data))
         self.assertTrue("eid" in json.loads(response.data))
-        self.assertEquals("application/json", response.content_type)
+        self.assertEqual("application/json", response.content_type)
         
     def test_fail_html_formatted_response(self):
         previous_prop = app.config['PROPAGATE_EXCEPTIONS']
         app.config['PROPAGATE_EXCEPTIONS'] = False
         response = self.app.get("/diagnostic/fail")
         app.config['PROPAGATE_EXCEPTIONS'] = previous_prop
-        self.assertEquals(500, response.status_code)
+        self.assertEqual(500, response.status_code)
         # we only explicily set application/json so we'll be expecting
         # flask to chose the right one
         self.assertTrue("text/html" in  response.content_type)
@@ -46,16 +42,16 @@ class TestFixture(unittest.TestCase):
 
     def test_callback(self):
         response = self.app.get("/diagnostic/echo?callback=run_me&bare=true")
-        self.assertEqual('run_me({"bare": "true"});', response.data)
-        self.assertEquals('application/javascript', response.content_type)
+        self.assertEqual(b'run_me({"bare": "true"});', response.data)
+        self.assertEqual('application/javascript', response.content_type)
     
     def test_callback_alone(self):
         response = self.app.get("/diagnostic/echo?callback=run_me")
-        self.assertEqual('run_me({});', response.data);
+        self.assertEqual(b'run_me({});', response.data);
 
     def test_no_callback(self):
         response = self.app.get("/diagnostic/echo?bare=true")
-        self.assertEqual('{"bare": "true"}', response.data);
+        self.assertEqual(b'{"bare": "true"}', response.data);
 
     @app.route("/test_me", methods=["GET"])
     def im_here_for_documentation():
@@ -69,7 +65,7 @@ class TestFixture(unittest.TestCase):
 
     def test_can_find_view_from_handler_file(self):
         response = self.app.get("/test_me")
-        self.assertEqual("this is a test response", response.data)
+        self.assertEqual(b"this is a test response", response.data)
 
     def test_view_returning_none_gets_handled_in_json_response(self):
         @app.route("/return_null", methods=["GET"])
@@ -89,8 +85,8 @@ class TestFixture(unittest.TestCase):
             return dict(pants="blue")
 
         response = self.app.get("/bad_callback?callback=run_me")
-        self.assertEquals(200, response.status_code)
-        self.assertEquals('run_me({"pants": "blue"});', response.data)
+        self.assertEqual(200, response.status_code)
+        self.assertEqual(b'run_me({"pants": "blue"});', response.data)
 
     def test_static_works_at_all(self):
         if not os.path.exists("./static/"):
@@ -99,7 +95,7 @@ class TestFixture(unittest.TestCase):
             sf.write("I'm static!")
         response = self.app.get("/static/core_test_index.html")
         self.assertEqual(200, response.status_code)
-        self.assertEqual("I'm static!", response.data.strip())
+        self.assertEqual(b"I'm static!", response.data.strip())
         if os.path.exists("./static/core_test_index.html"):
             os.unlink("./static/core_test_index.html")
 
@@ -175,8 +171,8 @@ class TestFixture(unittest.TestCase):
 
     def test_raw_json_string_returns(self):
         response = self.app.get("/can_return_raw_json_string")
-        self.assertEquals(200, response.status_code)
-        print("!%s!" % (response.data))
+        self.assertEqual(200, response.status_code)
+        print(("!%s!" % (response.data)))
         jr = json.loads(response.data)
         self.assertTrue(jr)
         self.assertEqual(1, jr['one'])
@@ -203,11 +199,11 @@ class TestFixture(unittest.TestCase):
     def test_return_string_from_json_view_using_jsonp(self):
         response = self.app.get("/json_endpoint_with_string_response?callback=pants")
         self.assertEqual(200, response.status_code)
-        self.assertEqual('pants("this is a string");', response.data)
+        self.assertEqual(b'pants("this is a string");', response.data)
         self.assertEqual('application/javascript', response.content_type)
 
     def test_return_string_from_json_view(self):
         response = self.app.get("/json_endpoint_with_string_response")
         self.assertEqual(200, response.status_code)
-        self.assertEqual('this is a string', response.data)
+        self.assertEqual(b'this is a string', response.data)
         self.assertEqual('application/json', response.content_type)
