@@ -26,7 +26,7 @@ s3_bucket = s3_conn.get_bucket(s3_bucket_name)
 
 def get_storage_path_for(key):
     hash_o = hashlib.sha256()
-    hash_o.update(key)
+    hash_o.update(key.encode())
     storage_key = hash_o.hexdigest()
     return os.path.join(
         storage_key[:2],
@@ -44,7 +44,7 @@ def store_it(key, data, content_type):
         newS3Key.key = get_storage_path_for(key)
         newS3Key.set_metadata('content-type', content_type)
         newS3Key.set_metadata('key', key)
-        newS3Key.set_contents_from_string(data);
+        newS3Key.set_contents_from_string(data)
 
 def read_it(key):
     try:

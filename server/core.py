@@ -19,7 +19,6 @@ from werkzeug import secure_filename
 from werkzeug.http import http_date
 from werkzeug.routing import Submount, Map
 
-from .cache import FileSystemCache
 from . import messages
 
 
@@ -41,7 +40,6 @@ app.config['SUBMOUNT_PATH'] = os.environ.get('SUBMOUNT_PATH', None)
 # this of course depends on the system supporting events for those sources
 app.config['LOCAL_EVENT_SOURCES'] = frozenset(os.environ.get('LOCAL_EVENT_SOURCES', '').split(","))
 
-app.config['_CACHE'] = FileSystemCache(app.config['CACHE_ROOT'])
 app.jinja_loader = ChoiceLoader([
         FileSystemLoader("./templates"),
         FileSystemLoader("./pyserver/templates")
@@ -221,11 +219,6 @@ app.preprocess_request = global_request_handler
 ################################################################################
 # views
 
-def get_git_info():
-    git_sha = Popen("git log -1 --oneline | awk '{ print $1 }'", stdout=PIPE, shell=True).communicate()[0].strip()
-    git_branch = Popen("git rev-parse --abbrev-ref HEAD", stdout=PIPE, shell=True).communicate()[0].strip()
-    return git_branch, git_sha
-
 @app.route("/", methods=["GET"])
 @app.route("/diag", methods=["GET"])
 @app.route("/diagnostic", methods=["GET"])
@@ -239,9 +232,6 @@ def pyserver_core_diagnostic_view():
     """
     diag_info = {}
     diag_info['machine_name'] = socket.gethostname()
-    git_branch, git_sha = get_git_info()
-    diag_info['git_branch'] = git_branch
-    diag_info['git_sha'] = git_sha
     diag_info['process_start_time'] = process_start_time.isoformat()
     diag_info['process_uptime_secs'] = (datetime.datetime.now() - process_start_time).seconds
     diag_info['server_port'] = os.environ.get('PORT', None)
@@ -302,18 +292,5 @@ def general_error_handler(error):
     else:
         return render_template("500.html", **context), 500
 
-handler_list = []
-def _load_handlers(handlers):
-    handler_list.extend(handlers)
-    for file_path in handlers:
-        split_name = os.path.splitext(file_path)
-        if split_name[1] == ".py" and not "__init__" in split_name[0]:
-            module_name = split_name[0][2:].replace("/", ".")
-            logging.error("loading handlers from %s" % (module_name))
-            module = __import__(module_name, globals())
+from .core_handlers import keyvalue_handlers, echo
 
-# find and load our handler files, this isn't fancy and it's not intended to be
-here = path.abspath(path.dirname(__file__))
-handler_dir = path.join(here, 'core_handlers')
-core_handlers = [ "./core_handlers/%s" % name for name in os.listdir(handler_dir)]
-_load_handlers(core_handlers)
