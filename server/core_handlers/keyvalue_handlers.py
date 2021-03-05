@@ -11,6 +11,7 @@ from boto.s3.key import Key as S3Key
 from boto.exception import S3ResponseError
 from boto.dynamodb2.table import Table
 from boto.dynamodb2.exceptions import ItemNotFound, ValidationException
+from boto.s3.connection import OrdinaryCallingFormat
 from server.core import app, get_storage_location, make_my_response_json
 from server.core import convert_types_in_dictionary, remove_single_element_lists
 from server.core import json_response, return_cors_response
@@ -21,7 +22,14 @@ logging.info("Using DDB table: %s" % (ddb_table_name))
 logging.info("Using S3 bucket %s for large objects" %(s3_bucket_name))
 
 ddb_kvstore = Table(ddb_table_name)
-s3_conn = boto.connect_s3(is_secure=False)
+
+if ("." in s3_bucket_name):
+    logging.debug("Using ordinary calling format for s3 connection")
+    s3_conn = boto.connect_s3(calling_format=OrdinaryCallingFormat())
+else:
+    logging.debug("Using standard s3 connection")
+    s3_conn = boto.connect_s3()
+
 s3_bucket = s3_conn.get_bucket(s3_bucket_name)
 
 def get_storage_path_for(key):
