@@ -37,7 +37,7 @@ def get_storage_path_for(key):
 def store_it(key, data, content_type):
     try:
         ddb_kvstore.put_item(data={'key': key, 'path':get_storage_path_for(key), 'body':data,'content-type':content_type}, overwrite=True)
-    except ValidationException, e:
+    except ValidationException as e:
         # if we get an "it's too big" exception we'll put it in our s3
         # kvstore 'big stuff' bucket
         newS3Key = S3Key(s3_bucket)
@@ -50,7 +50,7 @@ def read_it(key):
     try:
         item = ddb_kvstore.get_item(path=get_storage_path_for(key))
         return item['content-type'], item['body'], key
-    except ItemNotFound, e:
+    except ItemNotFound as e:
         # could be because it's super big, so we'll try our s3 bucket before
         # giving up for good
         try:
@@ -59,8 +59,8 @@ def read_it(key):
             body = s3Key.get_contents_as_string()
             content_type = s3Key.get_metadata('content-type')
             return content_type, body, key
-        except S3ResponseError, e:
-            logging.error("unable to find item for key %s anywhere\n%s", key, e)
+        except S3ResponseError as e:
+            logging.debug("unable to find item for key %s anywhere\n%s", key, e)
 
         return None, None, None
 

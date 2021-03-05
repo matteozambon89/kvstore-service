@@ -18,24 +18,24 @@ class TestFixture(unittest.TestCase):
 
     def test_echo(self):
         response = self.app.get("/echo?something=k")
-        self.assertEquals(200, response.status_code)
+        self.assertEqual(200, response.status_code)
 
     def test_fail_json_formatted_response(self):
         previous_prop = app.config['PROPAGATE_EXCEPTIONS']
         app.config['PROPAGATE_EXCEPTIONS'] = False
         response = self.app.get("/diagnostic/fail", content_type='json')
         app.config['PROPAGATE_EXCEPTIONS'] = previous_prop
-        self.assertEquals(500, response.status_code)
+        self.assertEqual(500, response.status_code)
         self.assertTrue(json.loads(response.data))
         self.assertTrue("eid" in json.loads(response.data))
-        self.assertEquals("application/json", response.content_type)
+        self.assertEqual("application/json", response.content_type)
         
     def test_fail_html_formatted_response(self):
         previous_prop = app.config['PROPAGATE_EXCEPTIONS']
         app.config['PROPAGATE_EXCEPTIONS'] = False
         response = self.app.get("/diagnostic/fail")
         app.config['PROPAGATE_EXCEPTIONS'] = previous_prop
-        self.assertEquals(500, response.status_code)
+        self.assertEqual(500, response.status_code)
         # we only explicily set application/json so we'll be expecting
         # flask to chose the right one
         self.assertTrue("text/html" in  response.content_type)
@@ -47,7 +47,7 @@ class TestFixture(unittest.TestCase):
     def test_callback(self):
         response = self.app.get("/diagnostic/echo?callback=run_me&bare=true")
         self.assertEqual('run_me({"bare": "true"});', response.data)
-        self.assertEquals('application/javascript', response.content_type)
+        self.assertEqual('application/javascript', response.content_type)
     
     def test_callback_alone(self):
         response = self.app.get("/diagnostic/echo?callback=run_me")
@@ -89,8 +89,8 @@ class TestFixture(unittest.TestCase):
             return dict(pants="blue")
 
         response = self.app.get("/bad_callback?callback=run_me")
-        self.assertEquals(200, response.status_code)
-        self.assertEquals('run_me({"pants": "blue"});', response.data)
+        self.assertEqual(200, response.status_code)
+        self.assertEqual('run_me({"pants": "blue"});', response.data)
 
     def test_static_works_at_all(self):
         if not os.path.exists("./static/"):
@@ -175,8 +175,8 @@ class TestFixture(unittest.TestCase):
 
     def test_raw_json_string_returns(self):
         response = self.app.get("/can_return_raw_json_string")
-        self.assertEquals(200, response.status_code)
-        print("!%s!" % (response.data))
+        self.assertEqual(200, response.status_code)
+        print(("!%s!" % (response.data)))
         jr = json.loads(response.data)
         self.assertTrue(jr)
         self.assertEqual(1, jr['one'])

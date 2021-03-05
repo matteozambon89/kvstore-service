@@ -20,10 +20,10 @@ class CacheTestFixture(unittest.TestCase):
 
     def test_cached_view_returns_cached_response(self):
         first_response = self.app.get("/nv_cache_test")
-        self.assertEquals(200, first_response.status_code)
+        self.assertEqual(200, first_response.status_code)
         second_response = self.app.get("/nv_cache_test")
-        self.assertEquals(200, second_response.status_code)
-        self.assertEquals(first_response.data, second_response.data)
+        self.assertEqual(200, second_response.status_code)
+        self.assertEqual(first_response.data, second_response.data)
 
     def test_cached_view_response_sets_header(self):
         response = self.app.get("/nv_cache_test")
@@ -36,38 +36,38 @@ class CacheTestFixture(unittest.TestCase):
 
     def test_cached_view_returns_uncached_with_no_vary_and_force(self):
         first_response = self.app.get("/nv_cache_test?_reload_cache=1")
-        self.assertEquals(200, first_response.status_code)
+        self.assertEqual(200, first_response.status_code)
         second_response = self.app.get("/nv_cache_test?_reload_cache=1")
-        self.assertEquals(200, second_response.status_code)
-        self.assertNotEquals(first_response.data, second_response.data)
+        self.assertEqual(200, second_response.status_code)
+        self.assertNotEqual(first_response.data, second_response.data)
 
     def test_cached_view_returns_uncached_response_by_vary(self):
         first_response = self.app.get("/cache_test?vary_key=1")
-        self.assertEquals(200, first_response.status_code)
+        self.assertEqual(200, first_response.status_code)
         second_response = self.app.get("/cache_test?vary_key=2")
-        self.assertEquals(200, second_response.status_code)
-        self.assertNotEquals(first_response.data, second_response.data)
+        self.assertEqual(200, second_response.status_code)
+        self.assertNotEqual(first_response.data, second_response.data)
 
     def test_cached_view_returns_uncached_response_by_either_vary(self):
         first_response = self.app.get("/cache_test?vary_key=1")
-        self.assertEquals(200, first_response.status_code)
+        self.assertEqual(200, first_response.status_code)
         second_response = self.app.post("/cache_test?vary_key2=1")
-        self.assertEquals(200, second_response.status_code)
-        self.assertNotEquals(first_response.data, second_response.data)
+        self.assertEqual(200, second_response.status_code)
+        self.assertNotEqual(first_response.data, second_response.data)
 
     def test_cached_view_returns_cached_with_same_vary(self):
         first_response = self.app.get("/cache_test?vary_key=1")
-        self.assertEquals(200, first_response.status_code)
+        self.assertEqual(200, first_response.status_code)
         second_response = self.app.get("/cache_test?vary_key=1")
-        self.assertEquals(200, second_response.status_code)
-        self.assertEquals(first_response.data, second_response.data)
+        self.assertEqual(200, second_response.status_code)
+        self.assertEqual(first_response.data, second_response.data)
 
     def test_cached_view_returns_uncached_with_force(self):
         first_response = self.app.get("/cache_test?vary_key=1")
-        self.assertEquals(200, first_response.status_code)
+        self.assertEqual(200, first_response.status_code)
         second_response = self.app.get("/cache_test?vary_key=1&_reload_cache=1")
-        self.assertEquals(200, second_response.status_code)
-        self.assertNotEquals(first_response.data, second_response.data)
+        self.assertEqual(200, second_response.status_code)
+        self.assertNotEqual(first_response.data, second_response.data)
 
     def test_cached_response_handles_non_string_response(self):
         @app.route("/ns_cache_test")
@@ -76,7 +76,7 @@ class CacheTestFixture(unittest.TestCase):
             return "<xml></xml>", 200, {'Content-Balls': 'text/xml'}
         first_response = self.app.get("/ns_cache_test")
         second_response = self.app.get("/ns_cache_test")
-        self.assertEquals(200, second_response.status_code)
-        self.assertEquals("<xml></xml>", second_response.data)
-        self.assertEquals("text/xml", second_response.headers['Content-Balls'])
+        self.assertEqual(200, second_response.status_code)
+        self.assertEqual("<xml></xml>", second_response.data)
+        self.assertEqual("text/xml", second_response.headers['Content-Balls'])
         self.assertTrue('Expires' in second_response.headers)

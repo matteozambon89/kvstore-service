@@ -39,7 +39,7 @@ class FileSystemCache:
                     else:
                         return (False, None)
                 return (expiration, loads(f.read()))
-        except IOError, e:
+        except IOError as e:
             # this is generally because the item isn't there
             return (False, factory_method())
 

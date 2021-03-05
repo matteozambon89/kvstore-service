@@ -19,8 +19,8 @@ from werkzeug import secure_filename
 from werkzeug.http import http_date
 from werkzeug.routing import Submount, Map
 
-from cache import FileSystemCache
-import messages
+from .cache import FileSystemCache
+from . import messages
 
 
 STATIC_DIR = os.environ.get('STATIC_DIR', path.join(os.getcwd(), 'static'))
@@ -65,7 +65,7 @@ def get_storage_location(named):
 
 def remove_single_element_lists(d):
     new_dict = {}
-    for key, value in d.items():
+    for key, value in list(d.items()):
         if type(value) == list and len(value) == 1:
             new_dict[key] = value[0]
         else:
@@ -87,7 +87,7 @@ def convert_into_number(value):
 
 def convert_types_in_dictionary(this_dictionary):
     into_this_dictionary = {}
-    for key, value in this_dictionary.items():
+    for key, value in list(this_dictionary.items()):
         if type(value) == dict:
             value = convert_types_in_dictionary(value)
         elif type(value) == list:
@@ -116,7 +116,7 @@ def cache_my_response(vary_by=None, expiration_seconds=900):
             if not vary_by:
                 cache_key = request.url
             else:
-                from StringIO import StringIO
+                from io import StringIO
                 key_buffer = StringIO()
                 key_buffer.write(request.url)
                 for vary_by_this in vary_by:
@@ -138,19 +138,22 @@ def cache_my_response(vary_by=None, expiration_seconds=900):
 def make_my_response_json(f):
     @wraps(f)
     def view_wrapper(*args, **kwargs):
-        view_return = f(*args, **kwargs)
-        if type(view_return) == dict:
-            return json_response(**view_return)
-        elif type(view_return) == list:
-            return json_response(view_return)
-        elif type(view_return) == int:
-            return json_response(**dict(status_code=view_return))
-        elif type(view_return) == str:
-            return json_response(view_return)
-        elif type(view_return) == tuple:
-            return json_response(view_return[0], status_code=view_return[1])
-        else:
-            return json_response(**{})
+        try:
+            view_return = f(*args, **kwargs)
+            if type(view_return) == dict:
+                return json_response(**view_return)
+            elif type(view_return) == list:
+                return json_response(view_return)
+            elif type(view_return) == int:
+                return json_response(**dict(status_code=view_return))
+            elif type(view_return) == str:
+                return json_response(view_return)
+            elif type(view_return) == tuple:
+                return json_response(view_return[0], status_code=view_return[1])
+            else:
+                return json_response(**{})
+        except Exception as e:
+            return json_response(**dict(status_code=400, description=e.description))
     return view_wrapper
 
 def json_response(*args, **kwargs):
@@ -159,7 +162,7 @@ def json_response(*args, **kwargs):
         or kwargs to be passed formatted correctly for the response.
         Also sets the Content-Type of the response to application/json
     """
-    content_type = "application/json";
+    content_type = "application/json"
     # if provided, use the status code otherwise default to 200
     # we remove it so it doesn't end up in our response
     status_code = kwargs.pop('status_code', 200)
@@ -306,7 +309,7 @@ def _load_handlers(handlers):
         split_name = os.path.splitext(file_path)
         if split_name[1] == ".py" and not "__init__" in split_name[0]:
             module_name = split_name[0][2:].replace("/", ".")
-            logging.debug("loading handlers from %s" % (module_name))
+            logging.error("loading handlers from %s" % (module_name))
             module = __import__(module_name, globals())
 
 # find and load our handler files, this isn't fancy and it's not intended to be
