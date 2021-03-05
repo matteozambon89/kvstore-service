@@ -219,11 +219,6 @@ app.preprocess_request = global_request_handler
 ################################################################################
 # views
 
-def get_git_info():
-    git_sha = Popen("git log -1 --oneline | awk '{ print $1 }'", stdout=PIPE, shell=True).communicate()[0].strip()
-    git_branch = Popen("git rev-parse --abbrev-ref HEAD", stdout=PIPE, shell=True).communicate()[0].strip()
-    return git_branch.decode(), git_sha.decode()
-
 @app.route("/", methods=["GET"])
 @app.route("/diag", methods=["GET"])
 @app.route("/diagnostic", methods=["GET"])
@@ -237,9 +232,6 @@ def pyserver_core_diagnostic_view():
     """
     diag_info = {}
     diag_info['machine_name'] = socket.gethostname()
-    git_branch, git_sha = get_git_info()
-    diag_info['git_branch'] = git_branch
-    diag_info['git_sha'] = git_sha
     diag_info['process_start_time'] = process_start_time.isoformat()
     diag_info['process_uptime_secs'] = (datetime.datetime.now() - process_start_time).seconds
     diag_info['server_port'] = os.environ.get('PORT', None)
