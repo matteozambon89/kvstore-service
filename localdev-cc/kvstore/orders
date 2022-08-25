@@ -1,0 +1,53 @@
+export AWS_ACCESS_KEY_ID="123"
+export AWS_SECRET_ACCESS_KEY="xyz"
+export AWS_DEFAULT_REGION="us-east-1"
+
+export KVSTORE_DYNAMO_TABLE="kvstore"
+export KVSTORE_DYNAMO_HOST="dynamodb-service"
+export KVSTORE_DYNAMO_PORT="8000"
+
+export KVSTORE_S3_BUCKET="kvstore-large"
+export KVSTORE_S3_HOST="localstack-service"
+export KVSTORE_S3_PORT="4566"
+
+export LOG_LEVEL="DEBUG"
+
+#############################################################
+# Authentication
+#############################################################
+# -------------------
+# Legacy Access Flags
+# -------------------
+#  - User: GLG Employee Account
+#  - Client: Paying Customers
+#  - Council Member: Expert
+#  - SurveyRespondent: CMP Survey User
+#  - APP: Application Tokens assigned for outside services
+#  - ExternalWorkers: A type of contractor described in GLGLIVE
+export SESSION_ROLE_GLG_DENY_ALL=0
+export SESSION_ROLE_GLG_USER=1
+export SESSION_ROLE_GLG_CLIENT=2
+export SESSION_ROLE_GLG_COUNCILMEMBER=4
+export SESSION_ROLE_GLG_SURVEYRESPONDENT=8
+export SESSION_ROLE_GLG_APP=16
+export SESSION_ROLE_GLG_EXTERNAL_WORKER=32
+export SESSION_ROLE_GLG_ALLOW_ALL=2147483647
+
+# --------------------------
+# Required Access Settings
+# --------------------------
+export SECURITY_MODE="public"
+# export SESSION_AUTH_SITE='/auth-proxy'
+# export SESSION_COOKIE_DOMAIN='glgresearch.com'
+# export SESSION_REVOCATION_DIR="/jwt_revocations"
+# export SESSION_COOKIE_NAME='_session'
+# export SESSION_MAX_TOKEN_AGE_IN_SECONDS=1209600
+# export SESSION_EXPIRATION_IN_SECONDS=3600
+
+# -------------------
+# Access
+# -------------------
+# This describes what users will be allowed to enter
+# export SESSION_ACCESS_FLAGS=$SESSION_ROLE_GLG_ALLOW_ALL
+
+dockerdeploy kvstore:test

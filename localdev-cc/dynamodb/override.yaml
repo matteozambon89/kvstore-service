@@ -1,0 +1,12 @@
+ports:
+  concat:
+    - 8000:8000
+command:
+  override: -jar DynamoDBLocal.jar -sharedDb -dbPath /home/dynamodblocal/data
+volumes:
+  concat:
+    - '${DYNAMODB_PATH}/data:/home/dynamodblocal/data'
+image:
+  makeLocal: true
+v2:
+  nginx: false

@@ -1,0 +1,17 @@
+engine: '>= 3.1.0'
+cpus:
+  override: 1
+memLimit:
+  override: 2048M
+memReservation:
+  override: 512M
+services:
+  - dynamodb
+  - kvstore
+  - localstack
+  #! add more here
+disable: hard
+v2:
+  nginx:
+    healthcheck: false
+    imageTag: d346882b777b4cf71a2a2987d9321b0ea48d9781

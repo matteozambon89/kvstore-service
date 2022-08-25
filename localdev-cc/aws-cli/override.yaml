@@ -1,0 +1,13 @@
+image:
+  makeLocal: true
+entrypoint:
+  keepAlive: true
+volumes:
+  concat:
+    - '${AWS_CLI_SETUP_PATH}:/aws/setup'
+dependsOn:
+  concat:
+    - 'localstack-service'
+    - 'dynamodb-service'
+v2:
+  nginx: false

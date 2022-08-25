@@ -23,3 +23,7 @@ Use the following environment variable:
 
 - `KVSTORE_S3_HOST` only the hostname (e.g. `localhost`, `localstack-service` etc.)
 - `KVSTORE_S3_PORT` only the port (e.g. `4566`)
+
+### Localdev
+
+See [./localdev-cc/README.md](./localdev-cc/README.md)

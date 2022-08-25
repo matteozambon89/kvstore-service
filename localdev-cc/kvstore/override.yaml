@@ -1,0 +1,10 @@
+image:
+  makeLocal: true
+dependsOn:
+  concat:
+    - 'aws-cli-service'
+    - 'localstack-service'
+    - 'dynamodb-service'
+volumes:
+  concat:
+    - '${KVSTORE_PATH}/server:/kvstore/server'

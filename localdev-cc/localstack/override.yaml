@@ -1,0 +1,13 @@
+ports:
+  concat:
+    - 4571:4571
+    - 4566:4566
+volumes:
+  concat:
+    - '${LOCALSTACK_PATH}/data:/tmp/localstack'
+    - '${LOCALSTACK_PATH}/volume:/var/lib/localstack'
+    - '/var/run/docker.sock:/var/run/docker.sock'
+image:
+  makeLocal: true
+v2:
+  nginx: false
