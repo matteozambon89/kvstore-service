@@ -7,11 +7,12 @@ import logging
 import boto
 from functools import wraps
 from flask import request, make_response
+from boto.regioninfo import RegionInfo
 from boto.s3.key import Key as S3Key
 from boto.exception import S3ResponseError
 from boto.dynamodb2.table import Table
 from boto.dynamodb2.exceptions import ItemNotFound, ValidationException
-from boto.s3.connection import OrdinaryCallingFormat
+from boto.s3.connection import OrdinaryCallingFormat, S3Connection
 from server.core import app, get_storage_location, make_my_response_json
 from server.core import convert_types_in_dictionary, remove_single_element_lists
 from server.core import json_response, return_cors_response
@@ -21,14 +22,28 @@ s3_bucket_name = os.environ.get('KVSTORE_S3_BUCKET', 'kvstore-large')
 logging.info("Using DDB table: %s" % (ddb_table_name))
 logging.info("Using S3 bucket %s for large objects" %(s3_bucket_name))
 
-ddb_kvstore = Table(ddb_table_name)
-
-if "." in s3_bucket_name:
-    logging.debug("Using ordinary calling format for s3 connection")
-    s3_conn = boto.connect_s3(calling_format=OrdinaryCallingFormat())
+ddb_host = os.environ.get('KVSTORE_DYNAMO_HOST', None)
+ddb_port = int(os.environ.get('KVSTORE_DYNAMO_PORT', None))
+if ddb_host and ddb_port:
+    logging.info("Using DDB connection: http://%s:%d" % (ddb_host, ddb_port))
+    ddb_kvstore = Table(ddb_table_name, connection=boto.dynamodb2.layer1.DynamoDBConnection(host=ddb_host, port=ddb_port, is_secure=False))
 else:
-    logging.debug("Using standard s3 connection")
-    s3_conn = boto.connect_s3()
+    logging.info("Using default DDB connection")
+    ddb_kvstore = Table(ddb_table_name)
+
+
+s3_host = os.environ.get('KVSTORE_S3_HOST', None)
+s3_port = int(os.environ.get('KVSTORE_S3_PORT', None))
+if s3_host and s3_port:
+    logging.debug("Using ordinary calling format for S3 connection: http://%s:%d" % (s3_host, s3_port))
+    s3_conn = S3Connection(host=s3_host, port=s3_port, is_secure=False, calling_format=OrdinaryCallingFormat())
+else:
+    if "." in s3_bucket_name:
+        logging.debug("Using ordinary calling format for S3 default connection")
+        s3_conn = boto.connect_s3(calling_format=OrdinaryCallingFormat())
+    else:
+        logging.debug("Using standard S3 default connection")
+        s3_conn = boto.connect_s3()
 
 s3_bucket = s3_conn.get_bucket(s3_bucket_name)
 
